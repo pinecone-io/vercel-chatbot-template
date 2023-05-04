@@ -19,7 +19,26 @@ export interface OpenAIPayload {
   n: number
 }
 
-export const OpenAICompletion = async (payload: OpenAIPayload) => {
+
+
+export const OpenAICompletion = async (text: string) => {
+  const payload: OpenAIPayload = {
+    model: 'gpt-4',
+    messages: [{
+      role: 'system',
+      content: text
+    }],
+    temperature: process.env.AI_TEMP ? parseFloat(process.env.AI_TEMP) : 0.7,
+    max_tokens: process.env.AI_MAX_TOKENS
+      ? parseInt(process.env.AI_MAX_TOKENS)
+      : 100,
+    top_p: 1,
+    frequency_penalty: 0,
+    presence_penalty: 0,
+    stream: true,
+    n: 1,
+  }
+
   const requestHeaders: Record<string, string> = {
     'Content-Type': 'application/json',
     Authorization: `Bearer ${process.env.OPENAI_API_KEY ?? ''}`,

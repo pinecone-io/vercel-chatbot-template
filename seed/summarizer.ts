@@ -1,28 +1,5 @@
 import Bottleneck from "bottleneck";
-import { OpenAIPayload } from "../utils/OpenAICompletion";
-
-// const llm = new OpenAI({ concurrency: 10, temperature: 0, modelName: "gpt-3.5-turbo" });
-
-// const { summarizerTemplate, summarizerDocumentTemplate } = templates;
-
-const payload: OpenAIPayload = {
-  model: 'gpt-4',
-  messages: [{
-    role: 'system',
-    content: 'Hello, how are you?'
-  }],
-  temperature: process.env.AI_TEMP ? parseFloat(process.env.AI_TEMP) : 0.7,
-  max_tokens: process.env.AI_MAX_TOKENS
-    ? parseInt(process.env.AI_MAX_TOKENS)
-    : 100,
-  top_p: 1,
-  frequency_penalty: 0,
-  presence_penalty: 0,
-  stream: true,
-  n: 1,
-}
-
-
+import { OpenAICompletion } from "../utils/OpenAICompletion";
 
 const limiter = new Bottleneck({
   minTime: 5050
@@ -41,26 +18,17 @@ const chunkSubstr = (str: string, size: number) => {
 
 const summarize = async ({ document, inquiry, onSummaryDone }: { document: string, inquiry?: string, onSummaryDone?: Function }) => {
   console.log("summarizing ", document.length)
-  // const promptTemplate = new PromptTemplate({
-  //   template: inquiry ? summarizerTemplate : summarizerDocumentTemplate,
-  //   inputVariables: inquiry ? ["document", "inquiry"] : ["document"],
-  // });
-  // const chain = new LLMChain({
-  //   prompt: promptTemplate,
-  //   llm
-  // })
+
+  const payload = `Summarize the following document so that it satisfies on the inquiry below:
+  INQUIRY: ${inquiry}
+  DOCUMENT: ${document}
+  `
+
 
   try {
-    // const result = await chain.call({
-    //   prompt: promptTemplate,
-    //   document,
-    //   inquiry
-    // })
-
-    // console.log(result)
-
-    // onSummaryDone && onSummaryDone(result.text)
-    // return result.text
+    const result = await OpenAICompletion(payload)
+    onSummaryDone && onSummaryDone(result.text)
+    return result
   } catch (e) {
     console.log(e)
   }
@@ -70,11 +38,11 @@ const rateLimitedSummarize = limiter.wrap(summarize)
 
 const summarizeLongDocument = async ({ document, inquiry, onSummaryDone }: { document: string, inquiry?: string, onSummaryDone?: Function }): Promise<string> => {
   // Chunk document into 4000 character chunks
-  const templateLength = inquiry ? summarizerTemplate.length : summarizerDocumentTemplate.length
+
   try {
-    if ((document.length + templateLength) > 4000) {
+    if ((document.length) > 4000) {
       console.log("document is long and has to be shortened", document.length)
-      const chunks = chunkSubstr(document, 4000 - templateLength - 1)
+      const chunks = chunkSubstr(document, 4000)
       let summarizedChunks: string[] = []
       summarizedChunks = await Promise.all(
         chunks.map(async (chunk) => {
@@ -91,7 +59,7 @@ const summarizeLongDocument = async ({ document, inquiry, onSummaryDone }: { doc
       const result = summarizedChunks.join("\n");
       console.log(result.length)
 
-      if ((result.length + templateLength) > 4000) {
+      if (result.length > 4000) {
         console.log("document is STILL long and has to be shortened further")
         return await summarizeLongDocument({ document: result, inquiry, onSummaryDone })
       } else {

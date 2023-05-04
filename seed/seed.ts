@@ -1,11 +1,11 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { PineconeClient, Vector } from "@pinecone-database/pinecone";
-import { Crawler, Page } from '../../crawler'
-import { Document } from "langchain/document";
+import { Crawler, Page } from './crawler'
+
 import Bottleneck from "bottleneck";
-// import { uuid } from "uuidv4";
-import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 import { summarizeLongDocument } from "./summarizer";
+import { RecursiveCharacterTextSplitter, Document } from "../utils/TextSplitter";
+import { OpenAIEmbedding } from "../utils/OpenAIEmbedding";
 
 const limiter = new Bottleneck({
   minTime: 50
@@ -41,23 +41,19 @@ const sliceIntoChunks = (arr: Vector[], chunkSize: number) => {
   );
 };
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function summarize(urls: string, limit: number, indexName: string, summmarize: boolean) {
 
-  const { query } = req;
-  const { urls: urlString, limit, indexName, summmarize } = query;
-  const urls = (urlString as string).split(",");
-  const crawlLimit = parseInt(limit as string) || 100;
+
+  const urlList = urls.split(",");
+  const crawlLimit = limit || 100;
   const pineconeIndexName = indexName as string || "crawl"
-  const shouldSummarize = summmarize === "true"
+  const shouldSummarize = summmarize === true
 
   if (!pinecone) {
     await initPineconeClient();
   }
 
-  const crawler = new Crawler(urls, crawlLimit, 200)
+  const crawler = new Crawler(urlList, crawlLimit, 200)
   const pages = await crawler.start() as Page[]
 
   const documents = await Promise.all(pages.map(async row => {
@@ -78,14 +74,12 @@ export default async function handler(
 
   const index = pinecone && pinecone.Index(pineconeIndexName);
 
-  const embedder = new OpenAIEmbeddings({
-    modelName: "text-embedding-ada-002"
-  })
+
   let counter = 0
 
   //Embed the documents
   const getEmbedding = async (doc: Document) => {
-    const embedding = await embedder.embedQuery(doc.pageContent)
+    const embedding = await OpenAIEmbedding(doc.pageContent)
     console.log(doc.pageContent)
     console.log("got embedding", embedding.length)
     process.stdout.write(`${Math.floor((counter / documents.flat().length) * 100)}%\r`)
@@ -122,12 +116,18 @@ export default async function handler(
         })
       }))
 
-      res.status(200).json({ message: "Done" })
+      console.log("done upserting")
     } catch (e) {
       console.log(e)
-      res.status(500).json({ message: `Error ${JSON.stringify(e)}` })
+      console.error({ message: `Error ${JSON.stringify(e)}` })
     }
   } catch (e) {
     console.log(e)
   }
 }
+
+const run = async () => {
+  await summarize("https://www.pinecone.io", 1, "crawl", false)
+}
+
+run()
