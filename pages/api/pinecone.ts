@@ -28,7 +28,6 @@ export const waitUntilIndexIsReady = async (
     const indexDescription: IndexMeta = await client.describeIndex({
       indexName,
     });
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     if (!indexDescription.status?.ready) {
       process.stdout.write(".");
