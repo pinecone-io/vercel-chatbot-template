@@ -1,5 +1,6 @@
 import { Layout, Text, Page } from "@vercel/examples-ui";
 import { Chat } from "../components/Chat";
+import { Pinecone } from "../components/Pinecone";
 
 function Home() {
   return (
@@ -13,6 +14,7 @@ function Home() {
       </section>
 
       <section className="flex flex-col gap-3">
+        <Pinecone />
         <Text variant="h2">AI Chat Bot:</Text>
         <div className="lg:w-2/3">
           <Chat />

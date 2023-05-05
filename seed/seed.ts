@@ -6,6 +6,7 @@ import Bottleneck from "bottleneck";
 import { summarizeLongDocument } from "./summarizer";
 import { RecursiveCharacterTextSplitter, Document } from "../utils/TextSplitter";
 import { OpenAIEmbedding } from "../utils/OpenAIEmbedding";
+import { chunkedUpsert, createIndexIfNotExists } from "../pages/api/pinecone";
 
 const limiter = new Bottleneck({
   minTime: 50
@@ -22,10 +23,6 @@ const initPineconeClient = async () => {
   });
 }
 
-type Response = {
-  message: string
-}
-
 
 // The TextEncoder instance enc is created and its encode() method is called on the input string.
 // The resulting Uint8Array is then sliced, and the TextDecoder instance decodes the sliced array in a single line of code.
@@ -34,26 +31,19 @@ const truncateStringByBytes = (str: string, bytes: number) => {
   return new TextDecoder("utf-8").decode(enc.encode(str).slice(0, bytes));
 };
 
+export default async function seed(url: string, limit: number, indexName: string, summarize: boolean) {
 
-const sliceIntoChunks = (arr: Vector[], chunkSize: number) => {
-  return Array.from({ length: Math.ceil(arr.length / chunkSize) }, (_, i) =>
-    arr.slice(i * chunkSize, (i + 1) * chunkSize)
-  );
-};
-
-export default async function summarize(urls: string, limit: number, indexName: string, summmarize: boolean) {
-
-
-  const urlList = urls.split(",");
   const crawlLimit = limit || 100;
-  const pineconeIndexName = indexName as string || "crawl"
-  const shouldSummarize = summmarize === true
+  const pineconeIndexName = indexName as string
+  const shouldSummarize = summarize === true
 
   if (!pinecone) {
     await initPineconeClient();
   }
 
-  const crawler = new Crawler(urlList, crawlLimit, 200)
+  await createIndexIfNotExists(pinecone!, pineconeIndexName, 1536)
+
+  const crawler = new Crawler([url], crawlLimit, 200)
   const pages = await crawler.start() as Page[]
 
   const documents = await Promise.all(pages.map(async row => {
@@ -70,8 +60,6 @@ export default async function summarize(urls: string, limit: number, indexName: 
     return docs
   }))
 
-  console.log(documents.length)
-
   const index = pinecone && pinecone.Index(pineconeIndexName);
 
 
@@ -80,12 +68,10 @@ export default async function summarize(urls: string, limit: number, indexName: 
   //Embed the documents
   const getEmbedding = async (doc: Document) => {
     const embedding = await OpenAIEmbedding(doc.pageContent)
-    console.log(doc.pageContent)
-    console.log("got embedding", embedding.length)
     process.stdout.write(`${Math.floor((counter / documents.flat().length) * 100)}%\r`)
     counter = counter + 1
     return {
-      // id: uuid(),
+      id: crypto.randomUUID(),
       values: embedding,
       metadata: {
         chunk: doc.pageContent,
@@ -102,20 +88,8 @@ export default async function summarize(urls: string, limit: number, indexName: 
 
   try {
     vectors = await Promise.all(documents.flat().map((doc) => rateLimitedGetEmbedding(doc))) as unknown as Vector[]
-    const chunks = sliceIntoChunks(vectors, 10)
-    console.log(chunks.length)
-
-
     try {
-      await Promise.all(chunks.map(async chunk => {
-        await index!.upsert({
-          upsertRequest: {
-            vectors: chunk as Vector[],
-            namespace: ""
-          }
-        })
-      }))
-
+      await chunkedUpsert(index!, vectors, 'documents', 10)
       console.log("done upserting")
     } catch (e) {
       console.log(e)
@@ -125,9 +99,3 @@ export default async function summarize(urls: string, limit: number, indexName: 
     console.log(e)
   }
 }
-
-const run = async () => {
-  await summarize("https://www.pinecone.io", 1, "crawl", false)
-}
-
-run()

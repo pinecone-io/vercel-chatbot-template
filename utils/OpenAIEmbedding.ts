@@ -12,7 +12,7 @@ export async function OpenAIEmbedding(input: string) {
       }),
     });
     const result = await response.json();
-    return result.data
+    return result.data[0].embedding as number[]
 
   } catch (e) {
     console.log("Error calling OpenAI embedding API: ", e);

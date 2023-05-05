@@ -17,6 +17,7 @@
     "cheerio": "^1.0.0-rc.12",
     "clsx": "^1.2.1",
     "cross-env": "^7.0.3",
+    "encoding": "^0.1.13",
     "eventsource-parser": "^0.1.0",
     "next": "latest",
     "node-spider": "^1.4.1",

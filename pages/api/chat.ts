@@ -33,7 +33,9 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     // Get the last message
     const lastMessage = body?.messages[body?.messages.length - 1]
-    const context = await getContext(lastMessage.content, pinecone)
+    const context = await getContext(lastMessage.content, pinecone, 'documents')
+
+    console.log(context)
 
     const messages: ChatGPTMessage[] = [
       {
@@ -53,7 +55,7 @@ const handler = async (req: Request): Promise<Response> => {
     messages.push(...body?.messages)
 
     const payload: OpenAIStreamPayload = {
-      model: 'gpt-4',
+      model: 'gpt-3.5-turbo',
       messages: messages,
       temperature: process.env.AI_TEMP ? parseFloat(process.env.AI_TEMP) : 0.7,
       max_tokens: process.env.AI_MAX_TOKENS
