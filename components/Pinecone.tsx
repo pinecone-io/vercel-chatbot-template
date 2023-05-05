@@ -1,28 +1,42 @@
 import clsx from "clsx";
 import { Button } from "./Button";
 import React from "react";
+import { Spinner } from "./Spinner";
 
 export function Pinecone({ className, ...props }: any) {
   const [entries, setSeeded] = React.useState([
     {
-      url: "https://www.nature.com/articles/d41586-023-01486-z",
-      title: "Mind reading machines are here (May 2023)",
+      url: "https://vercel.com/docs/concepts/functions/edge-functions/vercel-edge-package",
+      title: "@vercel/edge Package",
       seeded: false,
+      loading: false,
     },
     {
-      url: "https://mars.nasa.gov/news/9281/curiosity-mars-rover-reaches-long-awaited-salty-region/",
-      title:
-        "Curiosity Mars Rover Reaches Long-Awaited Salty Region (October 2022)",
+      url: "https://docs.pinecone.io/docs/manage-indexes",
+      title: "Managing Pinecone Indexes",
       seeded: false,
+      loading: false,
     },
     {
       url: "https://www.espn.com/nfl/story/_/id/37421059/giants-give-dt-dexter-lawrence-90-million-4-year-extension",
       title: "Dexter Lawrence 4 year extension",
       seeded: false,
+      loading: false,
     },
   ]);
 
   const getDocument = async (url: string) => {
+    setSeeded((seeded: any) =>
+      seeded.map((seed: any) => {
+        if (seed.url === url) {
+          return {
+            ...seed,
+            loading: true,
+          };
+        }
+        return seed;
+      })
+    );
     const response = await fetch("/api/seed", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -35,6 +49,7 @@ export function Pinecone({ className, ...props }: any) {
           return {
             ...seed,
             seeded: true,
+            loading: false,
           };
         }
         return seed;
@@ -56,6 +71,7 @@ export function Pinecone({ className, ...props }: any) {
             }}
           >
             {entry.title}
+            {entry.loading && <Spinner />}
           </Button>
         );
       })}
