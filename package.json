@@ -10,7 +10,7 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@pinecone-database/pinecone": "file:../pinecone-node-sdk",
+    "@pinecone-database/pinecone": "^0.1.5",
     "@vercel/analytics": "^0.1.11",
     "@vercel/examples-ui": "^1.0.5",
     "bottleneck": "^2.19.5",
