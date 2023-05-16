@@ -23,7 +23,7 @@ export interface OpenAIPayload {
 
 export const OpenAICompletion = async (text: string) => {
   const payload: OpenAIPayload = {
-    model: 'gpt-4',
+    model: 'gpt-3.5-turbo',
     messages: [{
       role: 'system',
       content: text
