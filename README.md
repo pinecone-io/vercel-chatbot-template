@@ -1,12 +1,13 @@
 # AI Chat GPT-3 example
 
-This example shows how to implement a simple chat bot using Next.js, API Routes, and [OpenAI ChatGPT API](https://beta.openai.com/docs/api-reference/completions/create).
+This example shows how to implement a chat bot backed by Pinecone using Next.js, API Routes, and [OpenAI ChatGPT API](https://beta.openai.com/docs/api-reference/completions/create).
 
 ### Components
 
 - Next.js
 - OpenAI API (ChatGPT) - streaming
 - API Routes (Edge runtime) - streaming
+- Pinecone store
 
 ## How to Use
 
@@ -34,7 +35,9 @@ Rename [`.env.example`](.env.example) to `.env.local`:
 cp .env.example .env.local
 ```
 
-then, update `OPENAI_API_KEY` with your [OpenAI](https://beta.openai.com/account/api-keys) secret key.
+Update `OPENAI_API_KEY` with your [OpenAI](https://beta.openai.com/account/api-keys) secret key.
+Update `PINECONE_API_KEY` with your [Pinecone](https://www.pinecone.io/start/) secret key, and `PINECONE_ENVIRONMENT` with your Pinecone environment name.
+Choose a `PINECONE_INDEX` name for your index. If the index does not exist, it will be created automatically.
 
 Next, run Next.js in development mode:
 

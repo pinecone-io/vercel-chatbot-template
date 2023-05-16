@@ -23,8 +23,6 @@ const summarize = async ({ document, inquiry, onSummaryDone }: { document: strin
   INQUIRY: ${inquiry}
   DOCUMENT: ${document}
   `
-
-
   try {
     const result = await OpenAICompletion(payload)
     onSummaryDone && onSummaryDone(result.text)
