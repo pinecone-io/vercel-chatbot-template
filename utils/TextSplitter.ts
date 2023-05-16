@@ -19,6 +19,7 @@ export class Document<
   metadata: Metadata;
 
   constructor(fields: DocumentInput<Metadata>) {
+    this.pageContent = fields.pageContent;
     this.pageContent = fields.pageContent
       ? fields.pageContent.toString()
       : this.pageContent;
