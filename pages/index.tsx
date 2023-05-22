@@ -4,19 +4,27 @@ import { Pinecone } from "../components/Pinecone";
 
 function Home() {
   return (
-    <Page className="flex flex-col gap-12">
-      <section className="flex flex-col gap-6">
+    <Page className="flex flex-col gap-6">
+      <section className="flex flex-col gap-4">
         <Text variant="h1">Pinecone with OpenAI usage example</Text>
         <Text className="text-zinc-600">
-          In this example, a simple chat bot is implemented using Next.js, API
-          Routes, Pinecone, and OpenAI API.
+          In the example provided, we've crafted a straightforward chatbot
+          utilizing the capabilities of Next.js, API Routes, Pinecone, and
+          OpenAI API. This chatbot serves as an interactive tool, ready to
+          answer your inquiries about the topics listed below. To initiate the
+          conversation, start by posing a question to the bot.
+        </Text>
+        <Text className="text-zinc-600">
+          Then, you can enhance the chatbot's understanding by clicking the
+          respective buttons to seed relevant information into the Pinecone
+          index. Once the index is updated, pose a similar question to the bot
+          to witness its improved comprehension and response accuracy.
         </Text>
       </section>
 
       <section className="flex flex-col gap-3">
         <Pinecone />
-        <Text variant="h2">AI Chat Bot:</Text>
-        <div className="lg:w-2/3">
+        <div className="lg">
           <Chat />
         </div>
       </section>

@@ -1,96 +1,70 @@
-//@ts-ignore
-import * as Spider from 'node-spider'
-//@ts-ignore
-import * as  TurndownService from 'turndown'
-import * as cheerio from 'cheerio'
-import parse from 'url-parse'
-const turndownService = new TurndownService();
+import cheerio from 'cheerio';
 
-export type Page = {
-  url: string,
-  text: string,
-  title: string,
+import { NodeHtmlMarkdown, NodeHtmlMarkdownOptions } from 'node-html-markdown'
+
+interface QueueItem {
+  url: string;
+  depth: number;
 }
+
+interface Page {
+  url: string;
+  content: string;
+}
+
 class Crawler {
-  pages: Page[] = [];
-  limit: number = 1000;
-  urls: string[] = [];
-  spider: Spider | null = {};
-  count: number = 0;
-  textLengthMinimum: number = 200;
+  private queue: QueueItem[] = [];
+  private seen: Set<string> = new Set();
+  private maxDepth: number;
+  private maxPages: number;
+  public pages: Page[] = [];
 
-  constructor(urls: string[], limit: number = 1000, textLengthMinimum: number = 200) {
-    this.urls = urls;
-    this.limit = limit
-    this.textLengthMinimum = textLengthMinimum
-
-    this.count = 0
-    this.pages = [];
-    this.spider = {}
+  constructor(maxDepth: number = 2, maxPages: number = 1) {
+    this.maxDepth = maxDepth;
+    this.maxPages = maxPages;
   }
 
-  handleRequest = (doc: any) => {
-    const $ = cheerio.load(doc.res.body);
-    $("script").remove();
-    $("#hub-sidebar").remove();
-    $("header").remove();
-    $("nav").remove();
-    $("img").remove();
-    const title = $("title").text() || $(".article-title").text();
-    const html = $("body").html();
-    const text = turndownService.turndown(html);
-    console.log("crawling ", doc.url)
-    const page: Page = {
-      url: doc.url,
-      text,
-      title,
-    };
-    if (text.length > this.textLengthMinimum) {
-      this.pages.push(page);
+  async crawl(startUrl: string): Promise<Page[]> {
+    this.queue.push({ url: startUrl, depth: 0 });
+
+    while (this.queue.length > 0 && this.pages.length < this.maxPages) {
+      const { url, depth } = this.queue.shift() as QueueItem;
+      console.log(url, depth)
+      if (depth > this.maxDepth) continue;
+
+      if (this.seen.has(url)) continue;
+
+      this.seen.add(url);
+
+      const html = await this.fetchPage(url);
+      const text = NodeHtmlMarkdown.translate(html)
+      // console.log("TEXT", text)
+      this.pages.push({ url, content: text });
+
+      const newUrls = this.extractUrls(html, url);
+
+      this.queue.push(...newUrls.map(newUrl => ({ url: newUrl, depth: depth + 1 })));
     }
+    return this.pages;
+  }
 
-    doc.$("a").each((i: number, elem: any) => {
-      var href = doc.$(elem).attr("href")?.split("#")[0];
-      var targetUrl = href && doc.resolve(href);
-      // crawl more
-      if (targetUrl && this.urls.some(u => {
-        const targetUrlParts = parse(targetUrl);
-        const uParts = parse(u);
-        return targetUrlParts.hostname === uParts.hostname
-      }) && this.count < this.limit) {
-        this.spider.queue(targetUrl, this.handleRequest);
-        this.count = this.count + 1
-      }
-    });
-  };
+  private async fetchPage(url: string): Promise<string> {
+    try {
+      const response = await fetch(url);
+      return await response.text();
+    } catch (error) {
+      // @ts-ignore
+      console.error(`Failed to fetch ${url}: ${error.message}`);
+      return '';
+    }
+  }
 
-  start = async () => {
-    this.pages = []
-    return new Promise((resolve, reject) => {
-      this.spider = new Spider({
-        concurrent: 5,
-        delay: 0,
-        allowDuplicates: false,
-        catchErrors: true,
-        addReferrer: false,
-        xhr: false,
-        keepAlive: false,
-        error: (err: any, url: string) => {
-          console.log(err, url);
-          reject(err)
-        },
-        // Called when there are no more requests
-        done: () => {
-          resolve(this.pages)
-        },
-        headers: { "user-agent": "node-spider" },
-        encoding: "utf8",
-      });
-      this.urls.forEach((url) => {
-        this.spider.queue(url, this.handleRequest);
-      });
-    })
+  private extractUrls(html: string, baseUrl: string): string[] {
+    const $ = cheerio.load(html);
+    const relativeUrls = $('a').map((i, link) => $(link).attr('href')).get() as string[];
+    return relativeUrls.map(relativeUrl => new URL(relativeUrl, baseUrl).href);
   }
 }
 
 export { Crawler };
+export type { Page };

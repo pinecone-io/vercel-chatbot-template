@@ -43,8 +43,8 @@ export default async function seed(url: string, limit: number, indexName: string
 
   await createIndexIfNotExists(pinecone!, pineconeIndexName, 1536)
 
-  const crawler = new Crawler([url], crawlLimit, 200)
-  const pages = await crawler.start() as Page[]
+  const crawler = new Crawler(1, crawlLimit)
+  const pages = await crawler.crawl(url) as Page[]
 
   const documents = await Promise.all(pages.map(async row => {
 
@@ -52,7 +52,7 @@ export default async function seed(url: string, limit: number, indexName: string
       chunkSize: 256,
       chunkOverlap: 10
     })
-    const pageContent = shouldSummarize ? await summarizeLongDocument({ document: row.text }) : row.text
+    const pageContent = shouldSummarize ? await summarizeLongDocument({ document: row.content }) : row.content
 
     const docs = splitter.splitDocuments([
       new Document({ pageContent, metadata: { url: row.url, text: truncateStringByBytes(pageContent, 36000) } }),
@@ -68,7 +68,6 @@ export default async function seed(url: string, limit: number, indexName: string
   //Embed the documents
   const getEmbedding = async (doc: Document) => {
     const embedding = await OpenAIEmbedding(doc.pageContent)
-    process.stdout.write(`${Math.floor((counter / documents.flat().length) * 100)}%\r`)
     counter = counter + 1
     return {
       id: crypto.randomUUID(),
@@ -81,7 +80,6 @@ export default async function seed(url: string, limit: number, indexName: string
     } as Vector
   }
   const rateLimitedGetEmbedding = limiter.wrap(getEmbedding);
-  process.stdout.write("100%\r")
   console.log("done embedding");
 
   let vectors = [] as Vector[]

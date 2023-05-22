@@ -58,23 +58,24 @@ export function Pinecone({ className, ...props }: any) {
   };
 
   return (
-    <>
+    <div className="flex  space-x-4 mb-4">
       {entries.map((entry: any) => {
         return (
-          <Button
-            style={{
-              backgroundColor: entry.seeded ? "green" : "bg-zinc-400",
-            }}
-            key={entry.url}
-            onClick={async () => {
-              await getDocument(entry.url);
-            }}
-          >
-            {entry.title}
-            {entry.loading && <Spinner />}
-          </Button>
+          <div className="flex flex-col gap-12" key={entry.url}>
+            <Button
+              style={{
+                backgroundColor: entry.seeded ? "green" : "bg-zinc-400",
+              }}
+              onClick={async () => {
+                await getDocument(entry.url);
+              }}
+            >
+              {entry.title}
+              {entry.loading && <Spinner />}
+            </Button>
+          </div>
         );
       })}
-    </>
+    </div>
   );
 }
