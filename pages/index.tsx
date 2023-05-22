@@ -9,10 +9,10 @@ function Home() {
         <Text variant="h1">Pinecone with OpenAI usage example</Text>
         <Text className="text-zinc-600">
           In the example provided, we've crafted a straightforward chatbot
-          utilizing the capabilities of Next.js, API Routes, Pinecone, and
-          OpenAI API. This chatbot serves as an interactive tool, ready to
-          answer your inquiries about the topics listed below. To initiate the
-          conversation, start by posing a question to the bot.
+          utilizing the capabilities of Next.js, OpenAI and Pinecone. This
+          chatbot serves as an interactive tool, ready to answer your inquiries
+          about the topics listed below. To initiate the conversation, start by
+          posing a question to the bot.
         </Text>
         <Text className="text-zinc-600">
           Then, you can enhance the chatbot's understanding by clicking the
