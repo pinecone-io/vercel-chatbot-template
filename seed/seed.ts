@@ -2,15 +2,12 @@ import { NextApiRequest, NextApiResponse } from "next";
 import { PineconeClient, Vector } from "@pinecone-database/pinecone";
 import { Crawler, Page } from './crawler'
 
-import Bottleneck from "bottleneck";
 import { summarizeLongDocument } from "./summarizer";
 import { RecursiveCharacterTextSplitter, Document } from "../utils/TextSplitter";
 import { OpenAIEmbedding } from "../utils/OpenAIEmbedding";
 import { chunkedUpsert, createIndexIfNotExists } from "../pages/api/pinecone";
 
-const limiter = new Bottleneck({
-  minTime: 50
-});
+
 
 let pinecone: PineconeClient | null = null
 
@@ -79,13 +76,13 @@ export default async function seed(url: string, limit: number, indexName: string
       }
     } as Vector
   }
-  const rateLimitedGetEmbedding = limiter.wrap(getEmbedding);
+
   console.log("done embedding");
 
   let vectors = [] as Vector[]
 
   try {
-    vectors = await Promise.all(documents.flat().map((doc) => rateLimitedGetEmbedding(doc))) as unknown as Vector[]
+    vectors = await Promise.all(documents.flat().map((doc) => getEmbedding(doc))) as unknown as Vector[]
     try {
       await chunkedUpsert(index!, vectors, 'documents', 10)
       console.log("done upserting")

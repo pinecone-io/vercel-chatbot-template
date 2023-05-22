@@ -9,7 +9,6 @@ specifiers:
   '@vercel/examples-ui': ^1.0.5
   '@viclafouch/fetch-crawler': ^1.0.13
   autoprefixer: ^10.4.14
-  bottleneck: ^2.19.5
   cheerio: ^1.0.0-rc.12
   clsx: ^1.2.1
   cross-env: ^7.0.3
@@ -38,7 +37,6 @@ dependencies:
   '@vercel/analytics': 0.1.11_react@18.2.0
   '@vercel/examples-ui': 1.0.5_o6dt4yn4syzkhlixdxt4y57rzi
   '@viclafouch/fetch-crawler': 1.0.13_encoding@0.1.13
-  bottleneck: 2.19.5
   cheerio: 1.0.0-rc.12
   clsx: 1.2.1
   cross-env: 7.0.3
@@ -711,10 +709,6 @@ packages:
     deprecated: This version has been deprecated in accordance with the hapi support policy (hapi.im/support). Please upgrade to the latest version to get the best features, bug fixes, and security patches. If you are unable to upgrade at this time, paid support is available for older versions (hapi.im/commercial).
     dependencies:
       hoek: 2.16.3
-    dev: false
-
-  /bottleneck/2.19.5:
-    resolution: {integrity: sha512-VHiNCbI1lKdl44tGrhNfU3lup0Tj/ZBMJB5/2ZbNXRCPuRCO7ed2mgcK4r17y+KB2EfuYuRaVlwNbAeaWGSpbw==}
     dev: false
 
   /brace-expansion/1.1.11:

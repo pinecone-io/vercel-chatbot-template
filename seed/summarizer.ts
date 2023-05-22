@@ -1,9 +1,5 @@
-import Bottleneck from "bottleneck";
 import { OpenAICompletion } from "../utils/OpenAICompletion";
 
-const limiter = new Bottleneck({
-  minTime: 5050
-});
 
 const chunkSubstr = (str: string, size: number) => {
   const numChunks = Math.ceil(str.length / size)
@@ -32,8 +28,6 @@ const summarize = async ({ document, inquiry, onSummaryDone }: { document: strin
   }
 }
 
-const rateLimitedSummarize = limiter.wrap(summarize)
-
 const summarizeLongDocument = async ({ document, inquiry, onSummaryDone }: { document: string, inquiry?: string, onSummaryDone?: Function }): Promise<string> => {
   // Chunk document into 4000 character chunks
 
@@ -46,9 +40,9 @@ const summarizeLongDocument = async ({ document, inquiry, onSummaryDone }: { doc
         chunks.map(async (chunk) => {
           let result
           if (inquiry) {
-            result = await rateLimitedSummarize({ document: chunk, inquiry, onSummaryDone })
+            result = await summarize({ document: chunk, inquiry, onSummaryDone })
           } else {
-            result = await rateLimitedSummarize({ document: chunk, onSummaryDone })
+            result = await summarize({ document: chunk, onSummaryDone })
           }
           return result
         })
