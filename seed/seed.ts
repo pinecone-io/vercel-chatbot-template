@@ -51,9 +51,10 @@ export default async function seed(url: string, limit: number, indexName: string
     })
     const pageContent = shouldSummarize ? await summarizeLongDocument({ document: row.content }) : row.content
 
-    const docs = splitter.splitDocuments([
+    const docs = await splitter.splitDocuments([
       new Document({ pageContent, metadata: { url: row.url, text: truncateStringByBytes(pageContent, 36000) } }),
     ]);
+
     return docs
   }))
 
