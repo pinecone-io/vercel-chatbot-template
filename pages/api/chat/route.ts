@@ -1,8 +1,10 @@
 import { PineconeClient } from '@pinecone-database/pinecone'
-import { type ChatGPTMessage } from '../../components/ChatLine'
-import { OpenAIStream, OpenAIStreamPayload } from '../../utils/OpenAIStream'
-import { initPineconeClient } from './pinecone'
-import { getContext } from './context'
+import { type ChatGPTMessage } from '../../../components/ChatLine'
+// import { OpenAIStream, OpenAIStreamPayload } from '../../utils/OpenAIStream'
+import { initPineconeClient } from '../pinecone'
+import { getContext } from '../context'
+import { Configuration, OpenAIApi } from 'openai-edge'
+import { OpenAIStream, StreamingTextResponse } from 'ai'
 
 // break the app if any API key is missing
 if (!process.env.OPENAI_API_KEY) {
@@ -25,7 +27,13 @@ export const config = {
   runtime: 'edge',
 }
 
-const handler = async (req: Request): Promise<Response> => {
+const openAiConfig = new Configuration({
+  apiKey: process.env.OPENAI_API_KEY
+})
+const openai = new OpenAIApi(openAiConfig)
+
+
+const handler = async (req: Request): Promise<StreamingTextResponse> => {
   const pinecone = await initPineconeClient();
 
   const body = await req.json()
@@ -54,23 +62,16 @@ const handler = async (req: Request): Promise<Response> => {
     ]
     messages.push(...body?.messages)
 
-    const payload: OpenAIStreamPayload = {
+    const response = await openai.createChatCompletion({
       model: 'gpt-3.5-turbo',
-      messages: messages,
-      temperature: process.env.AI_TEMP ? parseFloat(process.env.AI_TEMP) : 0.7,
-      max_tokens: process.env.AI_MAX_TOKENS
-        ? parseInt(process.env.AI_MAX_TOKENS)
-        : 100,
-      top_p: 1,
-      frequency_penalty: 0,
-      presence_penalty: 0,
       stream: true,
-      user: body?.user,
-      n: 1,
-    }
+      messages
+    })
 
-    const stream = await OpenAIStream(payload)
-    return new Response(stream)
+    const stream = OpenAIStream(response)
+    // Respond with the stream
+    return new StreamingTextResponse(stream)
+
   } catch (e) {
     return new Response(null)
   }
