@@ -23,9 +23,7 @@ if (!process.env.PINECONE_INDEX) {
   throw new Error('Missing Environment Variable PINECONE_INDEX')
 }
 
-export const config = {
-  runtime: 'edge',
-}
+export const runtime = 'edge'
 
 const openAiConfig = new Configuration({
   apiKey: process.env.OPENAI_API_KEY
