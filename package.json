@@ -1,7 +1,7 @@
 {
   "name": "ai-chatgpt",
   "repository": "https://github.com/vercel/examples.git",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "private": true,
   "scripts": {
     "dev": "cross-env NODE_OPTIONS='--inspect' next dev",
