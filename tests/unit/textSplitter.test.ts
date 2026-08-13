@@ -57,4 +57,42 @@ describe("RecursiveCharacterTextSplitter", () => {
     // Original metadata is preserved alongside the injected loc.
     expect(docs[0].metadata.url).toBe("src");
   });
+
+  it("recurses into a character split when a single token exceeds chunkSize", async () => {
+    const splitter = new RecursiveCharacterTextSplitter({ chunkSize: 10, chunkOverlap: 0 });
+    const text = `hi ${"x".repeat(24)} bye`;
+
+    const chunks = await splitter.splitText(text);
+
+    expect(chunks.length).toBeGreaterThan(1);
+    for (const chunk of chunks) {
+      expect(chunk.length).toBeLessThanOrEqual(splitter.chunkSize);
+    }
+    expect(chunks.join("")).toContain("x".repeat(24));
+  });
+
+  it("honors a custom separators list", async () => {
+    const splitter = new RecursiveCharacterTextSplitter({
+      chunkSize: 12,
+      chunkOverlap: 0,
+      separators: ["|", ""],
+    });
+
+    const chunks = await splitter.splitText("alpha|beta|gamma");
+
+    expect(chunks.some((c) => c.includes("alpha"))).toBe(true);
+    expect(chunks.some((c) => c.includes("gamma"))).toBe(true);
+  });
+
+  it("splitDocuments skips documents with undefined pageContent", async () => {
+    const splitter = new RecursiveCharacterTextSplitter({ chunkSize: 100, chunkOverlap: 0 });
+    const docs = await splitter.splitDocuments([
+      new Document({ pageContent: "keep me", metadata: { url: "a" } }),
+      { pageContent: undefined as unknown as string, metadata: { url: "b" } } as Document,
+    ]);
+
+    expect(docs.length).toBe(1);
+    expect(docs[0].pageContent).toBe("keep me");
+    expect(docs[0].metadata.url).toBe("a");
+  });
 });
