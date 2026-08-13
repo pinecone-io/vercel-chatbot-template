@@ -1,4 +1,4 @@
-import cheerio from 'cheerio';
+import * as cheerio from 'cheerio';
 
 import { NodeHtmlMarkdown, NodeHtmlMarkdownOptions } from 'node-html-markdown'
 
